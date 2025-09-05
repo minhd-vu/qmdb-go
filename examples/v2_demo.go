@@ -5,26 +5,28 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/minhd-vu/qmdb-go"
 )
 
 func main() {
 	adsDir := "ADS"
 
-	if err := InitDir(adsDir); err != nil {
+	if err := qmdb.InitDir(adsDir); err != nil {
 		log.Fatalf("Failed to init dir: %v", err)
 	}
 
-	ads, err := New(adsDir)
+	ads, err := qmdb.New(adsDir)
 	if err != nil {
 		log.Fatalf("Failed to create QMDB: %v", err)
 	}
 	defer ads.Free()
 
-	var changeSets []*QmdbChangeSet
+	var changeSets []*qmdb.QmdbChangeSet
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 2; j++ {
-			cset := NewChangeSet()
+			cset := qmdb.NewChangeSet()
 
 			var k [32]byte
 			var v [32]byte
@@ -38,14 +40,14 @@ func main() {
 					v[idx] = 1
 				}
 
-				kh, err := Hash(k[:])
+				kh, err := qmdb.Hash(k[:])
 				if err != nil {
 					log.Fatalf("Failed to hash key: %v", err)
 				}
 
-				shardId := uint8(Byte0ToShardId(kh[0]))
+				shardId := uint8(qmdb.Byte0ToShardId(kh[0]))
 
-				if err := cset.AddOp(OpCreate, shardId, kh[:], k[:], v[:]); err != nil {
+				if err := cset.AddOp(qmdb.OpCreate, shardId, kh[:], k[:], v[:]); err != nil {
 					log.Fatalf("Failed to add operation: %v", err)
 				}
 			}
@@ -57,9 +59,9 @@ func main() {
 
 	height := int64(1)
 	taskCount := int64(len(changeSets))
-	lastTaskId := (height << InBlockIdxBits) | (taskCount - 1)
+	lastTaskId := (height << qmdb.InBlockIdxBits) | (taskCount - 1)
 
-	tasksManager, err := NewTasksManager(changeSets, lastTaskId)
+	tasksManager, err := qmdb.NewTasksManager(changeSets, lastTaskId)
 	if err != nil {
 		log.Fatalf("Failed to create tasks manager: %v", err)
 	}
@@ -76,7 +78,7 @@ func main() {
 	}
 
 	for idx := int64(0); idx < taskCount; idx++ {
-		taskId := (height << InBlockIdxBits) | idx
+		taskId := (height << qmdb.InBlockIdxBits) | idx
 		sharedAds.AddTask(taskId)
 	}
 
@@ -89,7 +91,7 @@ func main() {
 	k[1] = 1
 	k[2] = 3
 
-	kh, err := Hash(k[:])
+	kh, err := qmdb.Hash(k[:])
 	if err != nil {
 		log.Fatalf("Failed to hash key for read: %v", err)
 	}

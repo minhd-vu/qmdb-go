@@ -1,4 +1,4 @@
-package main
+package qmdb
 
 /*
 #cgo LDFLAGS: -lqmdb_sys
